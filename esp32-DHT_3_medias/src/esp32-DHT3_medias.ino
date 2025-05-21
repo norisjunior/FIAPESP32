@@ -5,12 +5,11 @@
 
 #define DHTPIN 21
 #define DHTMODEL DHT22
+DHT dht(DHTPIN, DHTMODEL);
 
 #define LEDRED 26
 
 #define BOTAO 18
-
-DHT dht(DHTPIN, DHTMODEL);
 
 float temp, umid = 0;
 float hic = 0;
@@ -29,14 +28,14 @@ void setup() {
 void loop() {
   //Aguardar o pressionamento do botão para iniciar
   while (digitalRead(BOTAO) == HIGH) {
-    //Nada, espera o botão, porque aí sai do while
+    //Aguarda o botão ser pressionado - não há código a executar
   }
-  
+
   //Código que será executado continuamente
   temp = dht.readTemperature();
   umid = dht.readHumidity();
 
-  //Se as medições estão OK
+  //Avaliar se as medições obtidas estão válidas
   if ( isnan(temp) || isnan(umid) ) {
     Serial.println("Erro de leitura no sensor DHT 22! Reiniciando...");
     delay(2000);
@@ -54,11 +53,12 @@ void loop() {
     Serial.printf("\nÍndice de calor ALTO! Alerta! IC: %.2f\n", hic); Serial.println("");
   }
 
-  contador++; 
+  contador++;
   tempMedia = tempMedia + temp;
   umidMedia = umidMedia + umid;
   hicMedio = hicMedio + hic;
 
+  //Caso tenham sido obtidas 3 medições, calcular a média e reinicializar as variáveis
   if (contador == 3) {
     tempMedia = tempMedia / contador;
     umidMedia = umidMedia / contador;
@@ -71,6 +71,6 @@ void loop() {
   }
 
   delay(3000);
-  Serial.println("Pressione o botão para realizar nova leitura.");
-  digitalWrite(LEDRED, LOW);  
+  Serial.println("Pressione o botão para realizar nova leitura.\n");
+  digitalWrite(LEDRED, LOW);
 }
