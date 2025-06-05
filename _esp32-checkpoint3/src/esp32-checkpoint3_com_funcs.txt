@@ -1,0 +1,81 @@
+#include <DHT.h>
+
+#define DHTPIN 21
+#define DHTTYPE DHT22
+#define LED 26
+
+DHT dht(DHTPIN, DHTTYPE);
+
+// Função tipo "void": acende o LED se estiver quente (acima de 30 graus)
+void verificaCalorAcendeLED(float temperatura) {
+  if (temperatura > 30.0) {
+    digitalWrite(LED, HIGH);
+    Serial.println("Temperatura alta! LED Aceso.");
+  } else {
+    digitalWrite(LED, LOW);
+    Serial.println("Temperatura normal. LED Apagado.");
+  }
+}
+
+// Função tipo "int": conta quantos segundos se passaram desde que o ESP32 ligou
+int segundosDesdeInicio() {
+  return millis() / 1000;
+}
+
+// Função tipo "String" — gera uma mensagem de boas-vindas personalizada
+String mensagemBoasVindas(String nome) {
+  return "Olá, " + nome + "! Bem-vindo ao ESP32.";
+}
+
+// Função tipo "bool": informa se a umidade está em um nível "aceitável" (>=30 e <=80)
+bool umidadeOk(float umidade) {
+  return umidade >= 30 && umidade <= 80;
+}
+
+// Função tipo "float": calcula o Índice de Calor (adaptado)
+float icAdaptado(float temp, float umid) {
+  return (temp + (0.3 * umid) - 0.7);
+}
+
+void setup() {
+  Serial.begin(115200);
+  pinMode(LED, OUTPUT);
+  dht.begin();
+
+  // Exemplo de função com retorno String
+  String msg = mensagemBoasVindas("Noris");
+  Serial.println(msg);
+
+  // Exemplo de função com retorno int
+  Serial.println("Tempo desde o início: " + String(segundosDesdeInicio()) + " segundos\n");
+}
+
+void loop() {
+  float temperatura = dht.readTemperature();
+  float umidade = dht.readHumidity();
+
+  if (isnan(temperatura) || isnan(umidade)) {
+    Serial.println("Erro ao ler o sensor DHT!");
+    delay(2000);
+    return;
+  }
+
+  // Exemplo de função com retorno float
+  float ic = icAdaptado(temperatura, umidade);
+  Serial.println("Índice de calor (adaptado): " + String(ic) + ".");
+
+  // Exemplo de função com retorno bool
+  bool condicao = umidadeOk(umidade);
+  Serial.print("Umidade aceitável? ");
+  Serial.println(condicao ? "Sim" : "Não");
+
+  // Exemplo de função void (acende LED se estiver quente)
+  verificaCalorAcendeLED(temperatura);
+
+  Serial.println("Tempo desde o início: " + String(segundosDesdeInicio()) + " segundos\n");
+
+  delay(5000); // Espera 3 segundos entre cada leitura
+}
+
+
+
