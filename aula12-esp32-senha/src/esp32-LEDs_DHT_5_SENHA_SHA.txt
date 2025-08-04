@@ -1,0 +1,139 @@
+/* ESP32 DHT senha Admin com bloqueio após 3 tentativas erradas */
+
+#include <DHT.h>
+#include "mbedtls/sha256.h"
+
+#define LEDRED 25
+#define LEDBLUE 26
+#define LEDGREEN 27
+
+#define DHTPIN 23
+#define DHTMODEL DHT22
+DHT dht(DHTPIN, DHTMODEL);
+
+// Hash da senha "1234" (hexadecimal com 64 caracteres)
+const char* senha_hash_hex = "03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4";
+
+// Função para converter bytes para string hexadecimal
+String bytesToHex(const uint8_t* hash, size_t len) {
+	String hex = "";
+	const char hexChars[] = "0123456789abcdef";
+	for (size_t i = 0; i < len; i++) {
+	  hex += hexChars[(hash[i] >> 4) & 0x0F];
+	  hex += hexChars[hash[i] & 0x0F];
+	}
+	return hex;
+}
+
+// Função para calcular SHA-256 de uma string
+String sha256(String entrada) {
+	uint8_t hash[32];  // SHA-256 = 256 bits = 32 bytes
+	mbedtls_sha256_context ctx;
+
+	mbedtls_sha256_init(&ctx);
+	mbedtls_sha256_starts_ret(&ctx, 0); // 0 = SHA-256
+	mbedtls_sha256_update_ret(&ctx, (const unsigned char*)entrada.c_str(), entrada.length());
+	mbedtls_sha256_finish_ret(&ctx, hash);
+	mbedtls_sha256_free(&ctx);
+
+	return bytesToHex(hash, sizeof(hash));
+}
+
+String comando = "";            // Armazena o comando completo
+bool acendeRed   = false;
+bool acendeBlue  = false;
+bool acendeGreen = false;
+
+int tentativas = 3;
+
+void setup() {
+  Serial.begin(115200);
+  pinMode(LEDRED, OUTPUT);
+  pinMode(LEDBLUE, OUTPUT);
+  pinMode(LEDGREEN, OUTPUT);
+  dht.begin();
+  Serial.println("Digite o comando (ex: RED, GREEN, BLUE): ");
+}
+
+void loop() {
+
+  // Enquanto houver dados no buffer, leia caractere a caractere
+  while (Serial.available() > 0) {          
+    char c = Serial.read();                 
+    Serial.print(c);                        
+
+    // Se chegou end-of-line, processa o comando completo
+    if (c == '\n' || c == '\r') { // CR ou LF
+      comando.trim();  // Remove espaços/brancos
+      Serial.print("Você digitou: ");
+      Serial.println(comando);
+
+      if (comando == "ADMIN") {
+        Serial.println("Digite a senha: ");
+	    String pass = Serial.readStringUntil('\n');
+	    pass.trim();
+	    delay(2000);
+
+	    String hashDigitado = sha256(pass);
+	    Serial.print("Hash da senha digitada: ");
+        Serial.println(hashDigitado);
+
+		if (tentativas == 0) {
+			Serial.println("Tentativas de senha máximas atingidas. Sistema bloqueado!");
+			while(1); // trava até reiniciar
+		}
+
+	    if (!hashDigitado.equalsIgnoreCase(senha_hash_hex)) {
+			comando = "";
+			tentativas--;
+			Serial.print("Senha incorreta. Tentativas restantes:"); Serial.println(tentativas);
+		    Serial.println("Digite o comando (ex: RED, GREEN, BLUE): ");
+		    return;
+	    } else {
+			// Se a senha estiver correta, acende todos os LEDs e coleta medições do DHT
+			Serial.println("Área Admin: Acesso Liberado. Todos os LEDs acesos.\n");
+
+			digitalWrite(LEDRED, HIGH);
+			digitalWrite(LEDBLUE, HIGH);
+			digitalWrite(LEDGREEN, HIGH);
+
+			float temp = dht.readTemperature();
+			float umid = dht.readHumidity();
+			
+			if ( (isnan(temp)) || (isnan(umid)) ) {
+				Serial.println("Leitura incorreta.");
+				delay(2000);
+				return;
+			}
+
+			float hic = dht.computeHeatIndex(temp, umid, false);
+			
+			Serial.printf("Temperatura: %.2f °C - Umidade: %.2f %% - Índice de Calor: %.2f\n", temp, umid, hic);
+			Serial.println("");
+			
+			delay(3000);
+			
+			tentativas = 3;
+		}
+
+      }
+
+	  // Lógica de acionamento dos LEDs
+      acendeRed   = (comando == "RED");
+      acendeBlue  = (comando == "BLUE");
+      acendeGreen = (comando == "GREEN");
+
+      digitalWrite(LEDRED,   acendeRed   ? HIGH : LOW);
+      digitalWrite(LEDBLUE,  acendeBlue  ? HIGH : LOW);
+      digitalWrite(LEDGREEN, acendeGreen ? HIGH : LOW);
+
+      delay(1500);
+      Serial.println("\nDigite o comando (ex: RED, GREEN, BLUE): ");
+
+      comando = "";  // Reseta o buffer para o próximo comando
+    } else {
+      comando += c;  // Constrói a string enquanto não chega ENTER
+    }
+  }
+
+}
