@@ -44,7 +44,9 @@ void loop() {
 
       if (comando == "ADMIN") {
         Serial.println("Digite a senha: ");
-	    String pass = Serial.readStringUntil('\n');
+        Serial.setTimeout(5000);  // Define timeout para 5 segundos
+        String pass = Serial.readStringUntil('\n');
+        Serial.setTimeout(1000);  // Define timeout para 2 segundos
 	    pass.trim();
 
 		if (tentativas == 1) { //Era a última tentativa
