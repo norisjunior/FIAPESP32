@@ -42,9 +42,9 @@ void loop() {
 
       if (comando == "ADMIN") {
         Serial.println("Digite a senha: ");
-	      Serial.setTimeout(5000);  // Define timeout para 5 segundos
+	      Serial.setTimeout(1500);  // Define timeout para 1,5 segundo
         String pass = Serial.readStringUntil('\n');
-        Serial.setTimeout(1000);  // Define timeout para 2 segundos
+        Serial.setTimeout(1000);  // Define timeout para 1 segundo (padrão)
 	      pass.trim();
 
   	    if (pass != SENHA) {
@@ -93,5 +93,5 @@ void loop() {
       comando += c;  // Constrói a string enquanto não chega ENTER
     }
   }
-
+  delay(50);
 }

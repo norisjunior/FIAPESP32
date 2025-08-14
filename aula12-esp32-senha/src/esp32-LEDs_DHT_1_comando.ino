@@ -45,4 +45,5 @@ void loop() {
       comando += c;  // Constrói a string enquanto não chega ENTER
     }
   }
+  delay(50);
 }
