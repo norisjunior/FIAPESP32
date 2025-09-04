@@ -8,7 +8,7 @@
 //WebServer
 const char* WIFI_SSID = "Wokwi-GUEST";
 const char* WIFI_PASSWORD = "";
-const char* HTTPCHARSET = "charset=utf-8";
+const char* HTTPCHARSET = "text/html; charset=utf-8";
 const uint8_t WIFI_CHANNEL = 6;
 WebServer server(80);
 
@@ -40,6 +40,7 @@ float lerDistanciaCM() {
 
 // Rota para temperatura
 void handleTemperatura() {
+  server.sendHeader("Access-Control-Allow-Origin", "*");
   float temp = dht.readTemperature();
   if (isnan(temp)) {
     server.send(500, HTTPCHARSET, "Erro ao ler temperatura");
@@ -50,6 +51,7 @@ void handleTemperatura() {
 
 // Rota para umidade
 void handleUmidade() {
+  server.sendHeader("Access-Control-Allow-Origin", "*");
   float hum = dht.readHumidity();
   if (isnan(hum)) {
     server.send(500, HTTPCHARSET, "Erro ao ler umidade");
@@ -60,6 +62,7 @@ void handleUmidade() {
 
 // Rota para distância
 void handleDistancia() {
+  server.sendHeader("Access-Control-Allow-Origin", "*");
   float dist = lerDistanciaCM();
   server.send(200, HTTPCHARSET, String(dist) + " cm");
 }
