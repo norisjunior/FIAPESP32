@@ -9,7 +9,7 @@
 int16_t freqBeep = 800;
  
 void setup() {
-    Serial.begin(9600);         // Inicializa a comunicação serial
+    Serial.begin(115200);         // Inicializa a comunicação serial
     pinMode(trigPin, OUTPUT);   // Define o pino Trig como saída
     pinMode(echoPin, INPUT);    // Define o pino Echo como entrada
     pinMode(pinLED, OUTPUT);    // Define o pino do LED como saída para acender o LED
