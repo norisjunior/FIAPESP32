@@ -1,0 +1,128 @@
+// Sensor de ré com modo ADMIN
+#include "EasyBuzzer.h"
+
+#define trigPin 23
+#define echoPin 22
+#define pinLED 17
+#define pinBuzzer 19
+
+#define SENHA "1234"
+
+int16_t freqBeep = 800;
+int minDistance = 40;
+String comando = "";
+
+void setup() {
+  Serial.begin(9600);
+  pinMode(trigPin, OUTPUT);
+  pinMode(echoPin, INPUT);
+  pinMode(pinLED, OUTPUT);
+  EasyBuzzer.setPin(pinBuzzer);
+
+  Serial.println("=== Sensor de Ré ===");
+  Serial.println("Digite 'ADMIN' para alterar configurações ou aguarde medições.");
+}
+
+void loop() {
+  // --- Leitura de comandos pelo Serial ---
+  while (Serial.available() > 0) {
+    char c = Serial.read();
+    Serial.print(c);  // mostra caractere digitado
+
+    if (c == '\n' || c == '\r') {
+      comando.trim();
+
+      if (comando == "ADMIN") {
+        Serial.println("\nDigite a senha (timeout de 1,5 segundo): ");
+        Serial.setTimeout(1500); // espera até 1,5 segundo pela senha
+        String pass = Serial.readStringUntil('\n');
+        pass.trim();
+
+        if (pass != SENHA) {
+          Serial.println("Senha incorreta. Acesso negado.\n");
+          comando = "";
+          return;
+        }
+
+        // Senha correta: entra em modo manutenção
+        digitalWrite(pinLED, HIGH);
+        Serial.println("Acesso liberado! LED aceso.");
+        Serial.print("Distância mínima atual: ");
+        Serial.print(minDistance);
+        Serial.println(" cm");
+        Serial.println("Digite a nova distância mínima (cm) - (timeout de 1,5 segundo): ");
+
+        // Espera nova distância
+        while (true) {
+          if (Serial.available()) {
+            String entrada = Serial.readStringUntil('\n');
+            entrada.trim();
+            int novaDist = entrada.toInt();
+
+            if (novaDist > 0) {
+              minDistance = novaDist;
+              Serial.print("Nova distância mínima definida: ");
+              Serial.print(minDistance);
+              Serial.println(" cm");
+              digitalWrite(pinLED, LOW);
+              Serial.println("Modo manutenção encerrado.\n");
+              break;
+            } else {
+              Serial.println("Valor inválido. Digite novamente:");
+            }
+          }
+          delay(50);
+        }
+      }
+
+      comando = "";
+    } else {
+      comando += c;
+    }
+  }
+
+  // --- Medição normal de distância ---
+  long duration;
+  int distance;
+
+  digitalWrite(trigPin, LOW);
+  delayMicroseconds(2);
+  digitalWrite(trigPin, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(trigPin, LOW);
+
+  duration = pulseIn(echoPin, HIGH);
+  distance = duration * 0.034 / 2;
+
+  Serial.print("Distância: ");
+  Serial.print(distance);
+  Serial.println(" cm");
+
+  // --- Lógica do buzzer ---
+  if (distance >= 100) {
+    EasyBuzzer.beep(freqBeep);
+    delay(300);
+    EasyBuzzer.beep(0);
+    delay(300);
+  }
+  else if (distance >= 50 && distance < 100) {
+    EasyBuzzer.beep(freqBeep);
+    delay(150);
+    EasyBuzzer.beep(0);
+    delay(150);
+  }
+  else if (distance >= minDistance && distance < 50) {
+    EasyBuzzer.beep(freqBeep);
+    delay(100);
+    EasyBuzzer.beep(0);
+    delay(100);
+  }
+  else {
+    EasyBuzzer.beep(freqBeep);
+    delay(10);
+    EasyBuzzer.beep(0);
+    delay(10);
+  }
+
+  EasyBuzzer.update();
+}
