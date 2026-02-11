@@ -9,7 +9,7 @@
   "connections": [
     [ "esp:TX", "$serialMonitor:RX", "", [] ],
     [ "esp:RX", "$serialMonitor:TX", "", [] ],
-    [ "dht1:SDA", "esp:19", "green", [ "v19.2", "h57.7", "v105.6" ] ],
+    [ "dht1:SDA", "esp:26", "green", [ "v19.2", "h-76.7", "v124.8" ] ],
     [ "dht1:VCC", "esp:3V3", "red", [ "v0", "h-67.2" ] ],
     [ "dht1:GND", "esp:GND.2", "black", [ "v0", "h19.2" ] ]
   ],

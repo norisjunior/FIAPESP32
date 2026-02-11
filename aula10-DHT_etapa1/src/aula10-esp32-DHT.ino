@@ -1,15 +1,13 @@
-/* ESP32 DHT22
-*/
+/* ESP32 DHT22 */
 
 #include <DHT.h>
 
-#define DHTPIN 19
+#define DHTPIN 26
 #define DHTMODEL DHT22
 
 DHT dht(DHTPIN, DHTMODEL);
 
 float temp, umid;
-float hi;
 
 void setup() {
     Serial.begin(115200);
@@ -20,12 +18,6 @@ void setup() {
 void loop() {
     temp = dht.readTemperature();
     umid = dht.readHumidity();
-
-    // Verifica se houve erro de leitura e sai do loop
-    if (isnan(umid) || isnan(temp)) {
-        Serial.println("Falha na leitura!");
-        return;
-    }
 
     // Calcula índice de calor (heat index)
     hi = dht.computeHeatIndex(temp, umid, false);
